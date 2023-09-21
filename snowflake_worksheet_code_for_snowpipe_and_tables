@@ -1,0 +1,100 @@
+create or replace table album(
+    album_id varchar,
+    name varchar,
+    release_date date,
+    total_tracks number,
+    url varchar
+)
+comment = 'This is album table where data will land in Snowflake';
+
+create or replace table artist(
+    artist_id varchar,
+    artist_name varchar,
+    external_url varchar
+)
+comment = 'This is artist table where data will land in Snowflake';
+
+create or replace table songs(
+    song_id varchar,
+    song_name varchar,
+    duration_ms number,
+    url varchar,
+    popularity number,
+    song_added date,
+    album_id varchar,
+    artist_id varchar
+)
+comment = 'This is songs table where data will land in Snowflake';
+
+create or replace storage integration s3_bucket_integration
+    type = external_stage
+    storage_provider = 's3'
+    enabled = True
+    storage_aws_role_arn = ''
+    storage_allowed_locations = ('s3://$$/transaformed_data/')
+    comment = 'Snowflake integration with S3';
+    
+desc storage integration s3_bucket_integration;
+
+create or replace file format csv_file_format
+    type = 'csv'
+    field_delimiter =','
+    skip_header = 1
+    field_optionally_enclosed_by = '"'
+    empty_field_as_null = True
+    null_if = ('NULL', 'null');
+
+create or replace stage album_stage
+    storage_integration = s3_bucket_integration
+    url = 's3://$$h/transaformed_data/album_data/'
+    file_format = csv_file_format;
+
+create or replace stage artist_stage
+    storage_integration = s3_bucket_integration
+    url = 's3://$$/transaformed_data/artist_data/'
+    file_format = csv_file_format;
+
+create or replace stage songs_stage
+    storage_integration = s3_bucket_integration
+    url = 's3://$$h/transaformed_data/songs_data/'
+    file_format = csv_file_format;
+
+
+list @album_stage;
+list @artist_stage;
+list @songs_stage;
+
+-- Testing if copy into command works on all stages and tables
+copy into album from @album_stage file_format = csv_file_format;
+select * from album;
+truncate table album;
+
+copy into artist from @artist_stage file_format = csv_file_format;
+select * from artist;
+truncate table artist;
+
+copy into songs from @songs_stage;
+select * from songs;
+truncate table songs;
+    
+-- Now we will create snowpipes on all 3 stages to load the data automatically
+create or replace pipe album_pipe
+    auto_ingest = true
+    as
+    copy into album from @album_stage;
+
+show pipes;
+
+create or replace pipe artist_pipe
+    auto_ingest = true
+    as
+    copy into artist from @artist_stage;
+
+show pipes;
+
+create or replace pipe songs_pipe
+    auto_ingest = true
+    as
+    copy into songs from @songs_stage;
+
+show pipes;
