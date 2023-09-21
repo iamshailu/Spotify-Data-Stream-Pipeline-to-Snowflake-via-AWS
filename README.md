@@ -7,7 +7,7 @@ We will create our app on developers.spotify.com, this will give us secret id an
 #Step 2:
 Once our extract Lambda function fetches the data from API to S3 bucket, it is in raw format. We need to transform the raw JSON we received. We will create 3 dataframes from the raw json - Artist DF, Album DF and songs DF. For this we will write one lambda function, which will parse the json data and create these 3 dataframes. We will store the data in CSV format. To execute this lambda function, we will create another trigger on raw data S3 bucket, whenever data arrives in the raw S3 bucket, this transformation lambda function will be triggered. This will store the created dataframes in the a separate folder inside the same bucket.
 
-# Step 3:
+#Step 3:
 Once the data is arrived in curated S3 bucket, it needs to be loaded onto Snowflake. For this we will build a snowpipe on this bucket which will load the data to snowflake. Once the data is in snowflake, you can use snowflake's compute resources to query that data, build visualizations out of it.
 
 **You can find all these scripts in repository.
